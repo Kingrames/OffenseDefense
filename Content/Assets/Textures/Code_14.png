@@ -1,0 +1,126 @@
+Rem Neon.vbs
+Rem An InDesign CS2 VBScript
+Rem
+Rem This script creates a "blend" or "graduation" from the selected object or objects.
+Rem
+Rem For more about InDesign scripting, go to http://www.adobe.com/products/indesign/scripting.html
+Rem or visit the InDesign scripting user to user forum at http://www.adobeforums.com.
+Rem
+ReDim myObjectList(0)
+Set myInDesign = CreateObject("InDesign.Application.CS2")
+myInDesign.Activate
+If myInDesign.Documents.Count <> 0 Then
+    If myInDesign.Selection.Count <> 0 Then
+        For myCounter = 1 To myInDesign.Selection.Count
+            Select Case TypeName(myInDesign.Selection.Item(myCounter))
+                Case "Rectangle", "Oval", "Polygon", "GraphicLine"
+                    If Not (IsEmpty(myObjectList(0))) Then
+                        ReDim Preserve myObjectList(UBound(myObjectList) + 1)
+                    End If
+                    Set myObjectList(UBound(myObjectList)) = myInDesign.Selection.Item(myCounter)
+            End Select
+        Next
+        If Not (IsEmpty(myObjectList(0))) Then
+            myDisplayDialog myInDesign, myObjectList
+        Else
+            MsgBox ("Please select a rectangle, oval,polygon, or graphic line and try again.")
+        End If
+    Else
+        MsgBox ("Please select an object and try again.")
+    End If
+Else
+    MsgBox ("Please open a document, select an object, and try again.")
+End If
+Function myDisplayDialog(myInDesign, myObjectList)
+ReDim mySwatchNamesList(0)
+ReDim myLayerNamesList(0)
+For myCounter = 1 To myInDesign.ActiveDocument.Colors.Count
+    Rem Do not add unnamed colors.
+    If myInDesign.ActiveDocument.Colors.Item(myCounter).Name <> "" Then
+        If Not (IsEmpty(mySwatchNamesList(0))) Then
+            ReDim Preserve mySwatchNamesList(UBound(mySwatchNamesList) + 1)
+        End If
+        mySwatchNamesList(UBound(mySwatchNamesList)) = myInDesign.ActiveDocument.Colors.Item(myCounter).Name
+    End If
+Next
+Rem Add mixed ink swatches.
+For myCounter = 1 To myInDesign.ActiveDocument.MixedInks.Count
+    Rem Do not add unnamed colors.
+    If myInDesign.ActiveDocument.MixedInks.Item(myCounter).Name <> "" Then
+        If Not (IsEmpty(mySwatchNamesList(0))) Then
+            ReDim Preserve mySwatchNamesList(UBound(mySwatchNamesList) + 1)
+        End If
+        mySwatchNamesList(UBound(mySwatchNamesList)) = myInDesign.ActiveDocument.MixedInks.Item(myCounter).Name
+    End If
+Next
+For myCounter = 1 To myInDesign.ActiveDocument.Layers.Count
+    If Not (IsEmpty(myLayerNamesList(0))) Then
+        ReDim Preserve myLayerNamesList(UBound(myLayerNamesList) + 1)
+    End If
+    myLayerNamesList(UBound(myLayerNamesList)) = myInDesign.ActiveDocument.Layers.Item(myCounter).Name
+Next
+ReDim Preserve myLayerNamesList(UBound(myLayerNamesList) + 1)
+myLayerNamesList(UBound(myLayerNamesList)) = "New Layer"
+Set myDialog = myInDesign.Dialogs.Add
+With myDialog
+    .Name = "Neon"
+    With .DialogColumns.Add
+        With .BorderPanels.Add
+            With .DialogColumns.Add
+                With .StaticTexts.Add
+                    .StaticLabel = "Number of Steps:"
+                End With
+            End With
+            With .DialogColumns.Add
+                Set myNumberOfStepsField = .IntegerEditboxes.Add
+                myNumberOfStepsField.EditValue = 12
+            End With
+        End With
+        With .BorderPanels.Add
+            With .DialogColumns.Add
+                With .StaticTexts.Add
+                    .StaticLabel = "From:"
+                    .MinWidth = 36
+                End With
+            End With
+            With .DialogColumns.Add
+                With .DialogRows.Add
+                    With .DialogColumns.Add
+                        With .StaticTexts.Add
+                            .StaticLabel = "Stroke Color:"
+                            .MinWidth = 100
+                        End With
+                    End With
+                    With .DialogColumns.Add
+                        Set myFromStrokeColorMenu = .Dropdowns.Add
+                        myFromStrokeColorMenu.StringList = mySwatchNamesList
+                        myFromStrokeColorMenu.SelectedIndex = 0
+                    End With
+                End With
+                With .DialogRows.Add
+                    With .DialogColumns.Add
+                        With .StaticTexts.Add
+                            .StaticLabel = "Stroke Weight:"
+                            .MinWidth = 100
+                        End With
+                    End With
+                    With .DialogColumns.Add
+                        Set myFromStrokeWeightField = .RealEditboxes.Add
+                        myFromStrokeWeightField.EditValue = 12
+                    End With
+                End With
+                With .DialogRows.Add
+                    With .DialogColumns.Add
+                        With .StaticTexts.Add
+                            .StaticLabel = "Stroke Tint:"
+                            .MinWidth = 100
+                        End With
+                    End With
+                    With .DialogColumns.Add
+                        Set myFromStrokeTintField = .PercentEditboxes.Add
+                        myFromStrokeTintField.EditValue = 100
+                    End With
+                End With
+            End With
+        End With
+    
